@@ -11,12 +11,27 @@ import { toast } from 'react-toastify';
 import { SUPABASE_BUCKET_PHOTOS_PATH } from '../lib/const';
 import { removeBucketPath } from '../lib/removeBucketPath';
 
+import Image from 'next/image'
+
 export default function CreateUserPhotoNew({ user }) {
   // console.log('user', user)
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm()
   const [newImage, setImage] = useState()
   const [previewUrl, setPreviewUrl] = useState(null)
+
+  // const [images, setImages] = useState([])
+  const [errorText, setError] = useState('')
+
+  // useEffect(() => {
+  //   fetchPhotos()
+  // }, [])
+
+  // const fetchPhotos = async () => {
+  //   let { data: photos, error } = await supabase.from('photos').select('*').order('id', true)
+  //   if (error) console.log('error', error)
+  //   else setImages(photos)
+  // }
 
   const handleFile = async (event) => {
     if (event.target.files === null || event.target.files.length === 0) {
@@ -37,6 +52,9 @@ export default function CreateUserPhotoNew({ user }) {
 
     setImage(file)
     setPreviewUrl(URL.createObjectURL(file))
+    // setImages([...images, file])
+    // if (error) setError(error.message)
+    // else setImages([...images, file])
   }
 
   const onSubmit = async (data, event) => {
@@ -91,6 +109,15 @@ export default function CreateUserPhotoNew({ user }) {
     }
   }
 
+  const deleteImage = async (id) => {
+    try {
+      await supabase.from('photos').delete().eq('id', id)
+      setImages(images.filter((x) => x.id != id))
+    } catch (error) {
+      console.log('error', error)
+    }
+  }
+
 
   return (
     <div>
@@ -114,37 +141,49 @@ export default function CreateUserPhotoNew({ user }) {
           />
           {previewUrl && (
             <div className='mt-4'>
-              {/* <Image className='w-4/12' src={previewUrl} alt="image" width={300} height={200} layout='fixed' objectFit={"cover"} /> */}
-              {/* <div className='w-4/12' src={previewUrl} alt="image" width={300} height={200} layout='fixed' objectFit={"cover"} /> */}
-              <div className='w-4/12' src={previewUrl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} />
+              <Image className='w-4/12' src={previewUrl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} />
             </div>
           )}
 
           <input className='border-white-300 border-2 rounded p-1 w-16 mt-4' type="submit" />
         </form>
       </div>
+
+      {/* 投稿画像一覧と削除ボタンを表示 */}
+      
+      {!!errorText && <Alert text={errorText} />}
+      <div className="bg-white shadow overflow-hidden rounded-md">
+        {/* {console.log('images', images)} */}
+        <ul>
+          {/* {images.map((image) => (
+
+            <Photo key={image.id} title={image.title} url={ image.url} onDelete={() => deleteImage(image.id)} />
+            <p className='w-4/12' src={image.previewUrl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} key={image.id}>{image.title}<span>{image.url}</span></p>
+            <Image className='w-4/12' src={image.previewUrl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} key={image.id}></Image>
+            <Photo key={image.id} title={image.title} url={ image.url} onDelete={() => deleteImage(image.id)} />
+          ))} */}
+        </ul>
+      </div>
     </div>
   )
 
-
-
-
 }
 
-const Todo = ({ todo, onDelete }) => {
-  const [isCompleted, setIsCompleted] = useState(todo.is_complete)
+const Photo = ({ image, onDelete }) => {
+  console.log('photo image', image)
+  const [isPublished, setisPublished] = useState(image.is_published)
 
   const toggle = async () => {
     try {
       const { data, error } = await supabase
-        .from('todos')
-        .update({ is_complete: !isCompleted })
-        .eq('id', todo.id)
+        .from('photos')
+        .update({ is_published: !isPublished })
+        .eq('id', image.id)
         .single()
       if (error) {
         throw new Error(error)
       }
-      setIsCompleted(data.is_complete)
+      setisPublished(data.is_published)
     } catch (error) {
       console.log('error', error)
     }
@@ -160,7 +199,7 @@ const Todo = ({ todo, onDelete }) => {
     >
       <div className="flex items-center px-4 py-4 sm:px-6">
         <div className="min-w-0 flex-1 flex items-center">
-          <div className="text-sm leading-5 font-medium truncate">{todo.task}</div>
+          <div className="text-sm leading-5 font-medium truncate">{image.url}</div>
         </div>
         <div>
           <input
@@ -191,8 +230,8 @@ const Todo = ({ todo, onDelete }) => {
   )
 }
 
-// const Alert = ({ text }) => (
-//   <div className="rounded-md bg-red-100 p-4 my-3">
-//     <div className="text-sm leading-5 text-red-700">{text}</div>
-//   </div>
-// )
+const Alert = ({ text }) => (
+  <div className="rounded-md bg-red-100 p-4 my-3">
+    <div className="text-sm leading-5 text-red-700">{text}</div>
+  </div>
+)
