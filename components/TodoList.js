@@ -38,7 +38,7 @@ export default function Todos({ user }) {
 
   return (
     <div className="w-full">
-      <h1 className="mb-12">Todo List.</h1>
+      <p className="mb-12">Todo List.</p>
       <div className="flex gap-2 my-2">
         <input
           className="rounded w-full p-2"

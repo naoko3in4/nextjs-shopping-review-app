@@ -1,0 +1,33 @@
+# ユーザー
+users:
+  id: string
+  fullname: string
+  avatarURL: string
+  nickname: string
+
+# 投稿画像
+photos:
+  id: string
+  user_id: string
+  inserted_at: Timestamp
+  updatedAt: Timestamp
+  title: string
+  is_published: boolean
+  url: string
+
+# 画像へのコメント
+comments:
+  id: string
+  userId: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
+  body: string
+  isEdited: boolean
+  photoId: number #relation: { photo: id }
+
+# 画像へのいいね
+likes:
+  id: string
+  userId: string #relation: { user: id }
+  photoId: number #relation: { photo: id }
+  createdAt: Timestamp
