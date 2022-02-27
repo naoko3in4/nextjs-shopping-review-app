@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/initSupabase'
-
 import { v4 as uuidv4 } from 'uuid';
 
 import { SubmitHandler, useForm } from 'react-hook-form'
@@ -13,30 +12,68 @@ import { removeBucketPath } from '../lib/removeBucketPath';
 
 import Image from 'next/image'
 
-export default function CreateUserPhotoNew({ user }) {
+
+
+export default function CreateUserPhotoNew({ url,user }) {
   // console.log('user', user)
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm()
+  const [photos, setPhotos] = useState([])
   const [newImage, setImage] = useState()
   const [previewUrl, setPreviewUrl] = useState(null)
 
-  // const [images, setImages] = useState([])
   const [errorText, setError] = useState('')
+  const [testurl, setTesturl] = useState(null)
 
   // useEffect(() => {
-  //   fetchPhotos()
-  // }, [])
+  //   if (url) makeObjURL(url)
+  // }, [url])
 
-  // const fetchPhotos = async () => {
-  //   let { data: photos, error } = await supabase.from('photos').select('*').order('id', true)
-  //   if (error) console.log('error', error)
-  //   else setImages(photos)
-  // }
+  useEffect(() => {
+    fetchPhotos()
+  }, [])
+
+  useEffect(() => {
+    replaceURL()
+  }, [])
+
+
+  const fetchPhotos = async () => {
+
+    let { data: photos, error } = await supabase.from('photos').select('*').order('id', true)
+    if (error) console.log('error', error)
+    else setPhotos(photos)
+    // photos.forEach(item => setPhotos([...photos, item.url]));    
+
+  }  
+
+  const replaceURL = async () => {
+    const target = "https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/20d45806-bde0-4ab8-80cd-09f60090b72a/c0c1919d408b"
+    const urlPath = target.replace('https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/', '')
+    console.log('urlPath', urlPath);
+    makeObjURL(urlPath)
+  }
+
+  const makeObjURL = async (path) => {
+
+
+    const { data, error } = await supabase.storage.from('photos').download(path)
+    console.log('data', data);
+
+    const objURL = URL.createObjectURL(data)
+    console.log('objURL', objURL)
+
+    setTesturl(objURL)
+    console.log('testurl', testurl)
+
+  }
 
   const handleFile = async (event) => {
     if (event.target.files === null || event.target.files.length === 0) {
       return;
     }
+
+
 
     const file = event.target.files[0];
     const size = file.size
@@ -46,18 +83,23 @@ export default function CreateUserPhotoNew({ user }) {
       reset()
       setPreviewUrl(null)
       setImage(null)
+      setTesturl(null)
 
       return
     }
 
     setImage(file)
+    console.log('createdURL',URL.createObjectURL(file))
     setPreviewUrl(URL.createObjectURL(file))
-    // setImages([...images, file])
+  
+    // setPhotos([...photos, URL.createObjectURL(file)])
     // if (error) setError(error.message)
-    // else setImages([...images, file])
+    // else setPhotos([...photos, file])
   }
 
+
   const onSubmit = async (data, event) => {
+    setTesturl(null)
     const { title, is_published } = data
 
     if (!newImage) return
@@ -67,6 +109,8 @@ export default function CreateUserPhotoNew({ user }) {
     console.log('newImageKey', newImageKey);
 
     try {
+      console.log('user.id key',`${user.id}/${newImageKey}`)
+
 
       // storage に画像をアップロード
       const { data: inputData } = await supabase.storage
@@ -75,26 +119,19 @@ export default function CreateUserPhotoNew({ user }) {
           cacheControl: '3600',
           upsert: false
         })
+      
+      const key = inputData?.Key
 
-      // const key = inputData?.Key
-      // const key = data?.Key
-
-      // if (!key) {
-      //   throw new Error("Error")
-      // }
-      if (!newImageKey) {
+      if (!key) {
         throw new Error("Error")
       }
 
       // .from() で bucket 指定しているので、getPublicUrl() に渡すパスからは、bucket 名は取り除く必要がある
-      // NG: photos/25aea8bc-aa5e-42ce-b099-da8815c2a50f/fdf945886dfd
-      // OK: 25aea8bc-aa5e-42ce-b099-da8815c2a50f/fdf945886dfd
-      // const { publicURL } = supabase.storage.from(SUPABASE_BUCKET_PHOTOS_PATH).getPublicUrl(removeBucketPath(key, SUPABASE_BUCKET_PHOTOS_PATH))
-      const { publicURL } = supabase.storage.from(SUPABASE_BUCKET_PHOTOS_PATH).getPublicUrl(removeBucketPath(newImageKey, SUPABASE_BUCKET_PHOTOS_PATH))
+      const { publicURL } = supabase.storage.from(SUPABASE_BUCKET_PHOTOS_PATH).getPublicUrl(removeBucketPath(key, SUPABASE_BUCKET_PHOTOS_PATH))
       console.log('publicURL', publicURL)
 
       // DBにレコード作成
-      await supabase.from(SUPABASE_BUCKET_PHOTOS_PATH).insert([{
+      let { data: photo, error } = await supabase.from(SUPABASE_BUCKET_PHOTOS_PATH).insert([{
         user_id: user.id,
         title: title,
         is_published: is_published,
@@ -103,21 +140,23 @@ export default function CreateUserPhotoNew({ user }) {
 
       toast.success("画像を投稿しました！")
       // Router.push(`/user/${user.id}`)
+      if (error) setError(error.message)
+      // else setPhotos([...photos, photo])
+      
     } catch(error) {
       console.log(error)
       toast.error("エラーが発生しました。")
     }
   }
 
-  const deleteImage = async (id) => {
+  const deletePhoto = async (id) => {
     try {
       await supabase.from('photos').delete().eq('id', id)
-      setImages(images.filter((x) => x.id != id))
+      setPhotos(photos.filter((x) => x.id != id))
     } catch (error) {
       console.log('error', error)
     }
   }
-
 
   return (
     <div>
@@ -144,6 +183,11 @@ export default function CreateUserPhotoNew({ user }) {
               <Image className='w-4/12' src={previewUrl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} />
             </div>
           )}
+          {testurl && (
+            <div className='mt-4'>
+              <Image className='w-4/12' src={testurl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} />
+            </div>
+          )}
 
           <input className='border-white-300 border-2 rounded p-1 w-16 mt-4' type="submit" />
         </form>
@@ -153,8 +197,18 @@ export default function CreateUserPhotoNew({ user }) {
       
       {!!errorText && <Alert text={errorText} />}
       <div className="bg-white shadow overflow-hidden rounded-md">
-        {/* {console.log('images', images)} */}
+        {/* <p><Image className='w-4/12' src={testurl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} /></p> */}
+        {console.log('photos', photos)}
         <ul>
+          {photos.map((photo) => (
+            <li>
+              {/* <Image className='w-4/12' src={photo.url} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} />  */}
+            </li>
+            
+            // <Photo key={photo.id} photo={photo} onDelete={() => deletePhoto(photo.id)} />
+          ))}
+          <button>さくじょ</button>
+
           {/* {images.map((image) => (
 
             <Photo key={image.id} title={image.title} url={ image.url} onDelete={() => deleteImage(image.id)} />
