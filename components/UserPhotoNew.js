@@ -12,14 +12,14 @@ import { removeBucketPath } from '../lib/removeBucketPath';
 
 import Image from 'next/image'
 
-
-
 export default function CreateUserPhotoNew({ url,user }) {
   // console.log('user', user)
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm()
   const [photos, setPhotos] = useState([])
-  const [newImage, setImage] = useState()
+  const [urls, setURLs] = useState([])
+
+  // const [newImage, setImage] = useState()
   const [previewUrl, setPreviewUrl] = useState(null)
 
   const [errorText, setError] = useState('')
@@ -33,38 +33,63 @@ export default function CreateUserPhotoNew({ url,user }) {
     fetchPhotos()
   }, [])
 
-  useEffect(() => {
-    replaceURL()
-  }, [])
+  // useEffect(() => {
+  //   replacePATH()
+  // }, [])
 
 
   const fetchPhotos = async () => {
 
     let { data: photos, error } = await supabase.from('photos').select('*').order('id', true)
     if (error) console.log('error', error)
-    else setPhotos(photos)
-    // photos.forEach(item => setPhotos([...photos, item.url]));    
+    else setPhotos([...photos])
+    // else setPhotos(photos)
+    console.log('db photo data', photos)
+    // photos.forEach(item => setPhotos([...photos, item.url]));   
+    replacePATH(photos)
+    
 
   }  
 
-  const replaceURL = async () => {
-    const target = "https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/20d45806-bde0-4ab8-80cd-09f60090b72a/c0c1919d408b"
-    const urlPath = target.replace('https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/', '')
-    console.log('urlPath', urlPath);
-    makeObjURL(urlPath)
+  const replacePATH = (photos) => {
+    // ステートで保持した写真関連データのURLパスだけ抜き出して配列に入れる
+    const photoPATHs = photos.map(item => item.url.replace('https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/', ''))
+    console.log('photoPATHs', photoPATHs)
+    makeObjURL(photoPATHs)
+
+    // const target = "https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/20d45806-bde0-4ab8-80cd-09f60090b72a/c0c1919d408b"
+    // const urlPath = target.replace('https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/', '')
+    // console.log('urlPath', urlPath);
+    // makeObjURL(urlPath)
   }
 
-  const makeObjURL = async (path) => {
+  const makeObjURL = async (photoPATHs) => {
 
 
-    const { data, error } = await supabase.storage.from('photos').download(path)
-    console.log('data', data);
+    // console.log('nnnn', photoPATHs)
 
-    const objURL = URL.createObjectURL(data)
-    console.log('objURL', objURL)
+    // let { data, error } = await supabase.storage.from('photos').download(photoPATHs[0])
+    // console.log('@@@', data)
+    // let objURL = URL.createObjectURL(data)
+    // console.log('objURL', objURL)
+    // setURLs(([...objURL]))
 
-    setTesturl(objURL)
-    console.log('testurl', testurl)
+    for (let i = 0; i < photoPATHs.length; i++) {
+      let { data, error } = await supabase.storage.from('photos').download(photoPATHs[i])
+      console.log('@@@', data)
+      let objURL = URL.createObjectURL(data)
+      setURLs([...urls, objURL])
+    }
+    console.log('xxx', urls)
+    // console.log('urls', urls)
+    // const { data, error } = await supabase.storage.from('photos').download(photoPATHs[0])
+    // console.log('data', data);
+
+    // const objURL = URL.createObjectURL(data)
+    // console.log('objURL', objURL)
+
+    // setTesturl(objURL)
+    // console.log('testurl', testurl)
 
   }
 
@@ -185,7 +210,7 @@ export default function CreateUserPhotoNew({ url,user }) {
           )}
           {testurl && (
             <div className='mt-4'>
-              <Image className='w-4/12' src={testurl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} />
+              {/* <Image className='w-4/12' src={testurl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} /> */}
             </div>
           )}
 
@@ -198,13 +223,10 @@ export default function CreateUserPhotoNew({ url,user }) {
       {!!errorText && <Alert text={errorText} />}
       <div className="bg-white shadow overflow-hidden rounded-md">
         {/* <p><Image className='w-4/12' src={testurl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} /></p> */}
-        {console.log('photos', photos)}
+        {/* {console.log('photos', photos)} */}
         <ul>
-          {photos.map((photo) => (
-            <li>
-              {/* <Image className='w-4/12' src={photo.url} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} />  */}
-            </li>
-            
+          {urls.map((url) => (
+              <Image className='w-4/12' src={url} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} /> 
             // <Photo key={photo.id} photo={photo} onDelete={() => deletePhoto(photo.id)} />
           ))}
           <button>さくじょ</button>
