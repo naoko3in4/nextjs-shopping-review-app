@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { SubmitHandler, useForm } from 'react-hook-form'
 // import { Profile } from '../../../hooks/useUser'
 // import { Main } from '../../ui/Main'
-import Router from 'next/router';
+// import Router from 'next/router';
 import { toast } from 'react-toastify';
 import { SUPABASE_BUCKET_PHOTOS_PATH } from '../lib/const';
 import { removeBucketPath } from '../lib/removeBucketPath';
@@ -13,17 +13,13 @@ import { removeBucketPath } from '../lib/removeBucketPath';
 import Image from 'next/image'
 
 export default function CreateUserPhotoNew({ url,user }) {
-  // console.log('user', user)
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm()
   const [photos, setPhotos] = useState([])
-  const [urls, setURLs] = useState([])
-
-  // const [newImage, setImage] = useState()
   const [previewUrl, setPreviewUrl] = useState(null)
-
   const [errorText, setError] = useState('')
-  const [testurl, setTesturl] = useState(null)
+  const [image, setImage] = useState(null)
+  const [newImage, setNewImage] = useState()
 
   // useEffect(() => {
   //   if (url) makeObjURL(url)
@@ -42,63 +38,20 @@ export default function CreateUserPhotoNew({ url,user }) {
 
     let { data: photos, error } = await supabase.from('photos').select('*').order('id', true)
     if (error) console.log('error', error)
-    else setPhotos([...photos])
-    // else setPhotos(photos)
-    console.log('db photo data', photos)
-    // photos.forEach(item => setPhotos([...photos, item.url]));   
-    replacePATH(photos)
-    
+    for (let i = 0; i < photos.length; i++) { 
+      let path = photos[i].url.replace('https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/', '')
+      let { data, error } = await supabase.storage.from('photos').download(path)
+      let objURL = URL.createObjectURL(data)   
+      photos[i].url = objURL
+      setPhotos([...photos])
+    }
 
   }  
-
-  const replacePATH = (photos) => {
-    // ステートで保持した写真関連データのURLパスだけ抜き出して配列に入れる
-    const photoPATHs = photos.map(item => item.url.replace('https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/', ''))
-    console.log('photoPATHs', photoPATHs)
-    makeObjURL(photoPATHs)
-
-    // const target = "https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/20d45806-bde0-4ab8-80cd-09f60090b72a/c0c1919d408b"
-    // const urlPath = target.replace('https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/', '')
-    // console.log('urlPath', urlPath);
-    // makeObjURL(urlPath)
-  }
-
-  const makeObjURL = async (photoPATHs) => {
-
-
-    // console.log('nnnn', photoPATHs)
-
-    // let { data, error } = await supabase.storage.from('photos').download(photoPATHs[0])
-    // console.log('@@@', data)
-    // let objURL = URL.createObjectURL(data)
-    // console.log('objURL', objURL)
-    // setURLs(([...objURL]))
-
-    for (let i = 0; i < photoPATHs.length; i++) {
-      let { data, error } = await supabase.storage.from('photos').download(photoPATHs[i])
-      console.log('@@@', data)
-      let objURL = URL.createObjectURL(data)
-      setURLs([...urls, objURL])
-    }
-    console.log('xxx', urls)
-    // console.log('urls', urls)
-    // const { data, error } = await supabase.storage.from('photos').download(photoPATHs[0])
-    // console.log('data', data);
-
-    // const objURL = URL.createObjectURL(data)
-    // console.log('objURL', objURL)
-
-    // setTesturl(objURL)
-    // console.log('testurl', testurl)
-
-  }
 
   const handleFile = async (event) => {
     if (event.target.files === null || event.target.files.length === 0) {
       return;
     }
-
-
 
     const file = event.target.files[0];
     const size = file.size
@@ -108,7 +61,8 @@ export default function CreateUserPhotoNew({ url,user }) {
       reset()
       setPreviewUrl(null)
       setImage(null)
-      setTesturl(null)
+      setNewImage(null)
+      // setTesturl(null)
 
       return
     }
@@ -124,10 +78,11 @@ export default function CreateUserPhotoNew({ url,user }) {
 
 
   const onSubmit = async (data, event) => {
-    setTesturl(null)
+    // setTesturl(null)
+
     const { title, is_published } = data
 
-    if (!newImage) return
+    // if (!newImage) return
 
     const uuid = uuidv4()
     const newImageKey = uuid.split('-')[uuid.split('-').length - 1]
@@ -208,12 +163,6 @@ export default function CreateUserPhotoNew({ url,user }) {
               <Image className='w-4/12' src={previewUrl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} />
             </div>
           )}
-          {testurl && (
-            <div className='mt-4'>
-              {/* <Image className='w-4/12' src={testurl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} /> */}
-            </div>
-          )}
-
           <input className='border-white-300 border-2 rounded p-1 w-16 mt-4' type="submit" />
         </form>
       </div>
@@ -222,22 +171,10 @@ export default function CreateUserPhotoNew({ url,user }) {
       
       {!!errorText && <Alert text={errorText} />}
       <div className="bg-white shadow overflow-hidden rounded-md">
-        {/* <p><Image className='w-4/12' src={testurl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} /></p> */}
-        {/* {console.log('photos', photos)} */}
         <ul>
-          {urls.map((url) => (
-              <Image className='w-4/12' src={url} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} /> 
-            // <Photo key={photo.id} photo={photo} onDelete={() => deletePhoto(photo.id)} />
+          {photos.map((photo) => (
+              <Image key={photo.id} className='w-4/12' src={photo.url} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} /> 
           ))}
-          <button>さくじょ</button>
-
-          {/* {images.map((image) => (
-
-            <Photo key={image.id} title={image.title} url={ image.url} onDelete={() => deleteImage(image.id)} />
-            <p className='w-4/12' src={image.previewUrl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} key={image.id}>{image.title}<span>{image.url}</span></p>
-            <Image className='w-4/12' src={image.previewUrl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} key={image.id}></Image>
-            <Photo key={image.id} title={image.title} url={ image.url} onDelete={() => deleteImage(image.id)} />
-          ))} */}
         </ul>
       </div>
     </div>
