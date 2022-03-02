@@ -173,7 +173,11 @@ export default function CreateUserPhotoNew({ url,user }) {
       <div className="bg-white shadow overflow-hidden rounded-md">
         <ul>
           {photos.map((photo) => (
-              <Image key={photo.id} className='w-4/12' src={photo.url} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} /> 
+            <li>
+              <Image key={photo.id} className='w-4/12' src={photo.url} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} />
+              <button onClick={() => deletePhoto(photo.id)} className='border-gray-300 border-2 rounded p-1 w-12'>削除</button>
+            </li>
+            
           ))}
         </ul>
       </div>
