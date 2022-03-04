@@ -12,7 +12,10 @@
     "@supabase/ui": "^0.36.3",
     "next": "^11.1.1",
     "react": "^17.0.1",
-    "react-dom": "^17.0.1"
+    "react-dom": "^17.0.1",
+    "react-hook-form": "^7.27.0",
+    "react-toastify": "^8.2.0",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "postcss-flexbugs-fixes": "4.2.1",

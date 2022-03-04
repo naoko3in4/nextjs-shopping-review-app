@@ -1,6 +1,8 @@
 import { supabase } from '../lib/initSupabase'
 import { Auth } from '@supabase/ui'
 import TodoList from '../components/TodoList'
+// import UserPhotoNew from '../components/UserPhotoNew'
+import CreateUserPhotoNew from '../components/UserPhotoNew'
 
 export default function IndexPage() {
   const { user } = Auth.useUser()
@@ -21,7 +23,8 @@ export default function IndexPage() {
           className="w-full h-full flex flex-col justify-center items-center p-4"
           style={{ minWidth: 250, maxWidth: 600, margin: 'auto' }}
         >
-          <TodoList user={supabase.auth.user()} />
+            <TodoList user={supabase.auth.user()} />
+            <CreateUserPhotoNew user={supabase.auth.user()} />
           <button
             className="btn-black w-full mt-12"
             onClick={async () => {
@@ -29,6 +32,7 @@ export default function IndexPage() {
               if (error) console.log('Error logging out:', error.message)
             }}
           >
+            {/* <UserPhotoNew user={supabase.auth.user()}/> */}
             Logout
           </button>
         </div>
@@ -36,3 +40,4 @@ export default function IndexPage() {
     </div>
   )
 }
+
