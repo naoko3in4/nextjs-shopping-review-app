@@ -18,36 +18,29 @@ export default function CreateUserPhotoNew({ url,user }) {
   const [photos, setPhotos] = useState([])
   const [previewUrl, setPreviewUrl] = useState(null)
   const [errorText, setError] = useState('')
-  const [image, setImage] = useState(null)
-  const [newImage, setNewImage] = useState()
 
-  // useEffect(() => {
-  //   if (url) makeObjURL(url)
-  // }, [url])
-
+  // DBから取得した画像一覧をステートで管理
   useEffect(() => {
     fetchPhotos()
   }, [])
 
-  // useEffect(() => {
-  //   replacePATH()
-  // }, [])
-
-
+  // 画像情報を DBから取得
   const fetchPhotos = async () => {
-
+    // supabase DB photos のデータをすべて取得
     let { data: photos, error } = await supabase.from('photos').select('*').order('id', true)
     if (error) console.log('error', error)
+    // URLオブジェクトにする時用のパスに整形
     for (let i = 0; i < photos.length; i++) { 
       let path = photos[i].url.replace('https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/', '')
       let { data, error } = await supabase.storage.from('photos').download(path)
+      // URLオブジェクト化した変数を配列 photos の url にして格納
       let objURL = URL.createObjectURL(data)   
       photos[i].url = objURL
       setPhotos([...photos])
     }
-
   }  
 
+  // 添付ファイルの扱い
   const handleFile = async (event) => {
     if (event.target.files === null || event.target.files.length === 0) {
       return;
@@ -62,36 +55,25 @@ export default function CreateUserPhotoNew({ url,user }) {
       setPreviewUrl(null)
       setImage(null)
       setNewImage(null)
-      // setTesturl(null)
-
       return
     }
 
-    setImage(file)
-    console.log('createdURL',URL.createObjectURL(file))
+    console.log('createdURL', URL.createObjectURL(file))
+    // プレビュー用をステートに持たせる
     setPreviewUrl(URL.createObjectURL(file))
-  
-    // setPhotos([...photos, URL.createObjectURL(file)])
-    // if (error) setError(error.message)
-    // else setPhotos([...photos, file])
   }
 
-
+  // submit時
   const onSubmit = async (data, event) => {
-    // setTesturl(null)
 
     const { title, is_published } = data
 
-    // if (!newImage) return
-
+    // 画像のユニークIDとイメージキーの生成
     const uuid = uuidv4()
     const newImageKey = uuid.split('-')[uuid.split('-').length - 1]
-    console.log('newImageKey', newImageKey);
 
     try {
-      console.log('user.id key',`${user.id}/${newImageKey}`)
-
-
+      // console.log('user.id key',`${user.id}/${newImageKey}`)
       // storage に画像をアップロード
       const { data: inputData } = await supabase.storage
         .from(SUPABASE_BUCKET_PHOTOS_PATH)
@@ -121,7 +103,16 @@ export default function CreateUserPhotoNew({ url,user }) {
       toast.success("画像を投稿しました！")
       // Router.push(`/user/${user.id}`)
       if (error) setError(error.message)
-      // else setPhotos([...photos, photo])
+      // 画像一覧ステートにプレビュー画像（URLオブジェクトになったもの）を追加
+      let previewDate = data
+      previewDate.url = previewUrl
+      setPhotos([...photos, previewDate])
+
+      // プレビュー画像を消す
+      setPreviewUrl(null)
+
+      // フォームを空にする
+      reset()
       
     } catch(error) {
       console.log(error)
@@ -129,9 +120,11 @@ export default function CreateUserPhotoNew({ url,user }) {
     }
   }
 
+  // DB から画像情報の削除
   const deletePhoto = async (id) => {
     try {
       await supabase.from('photos').delete().eq('id', id)
+      // photos配列の該当画像情報も削除
       setPhotos(photos.filter((x) => x.id != id))
     } catch (error) {
       console.log('error', error)
@@ -158,11 +151,11 @@ export default function CreateUserPhotoNew({ url,user }) {
             multiple
             {...register("image", { onChange: handleFile, required: true })}
           />
-          {previewUrl && (
-            <div className='mt-4'>
-              <Image className='w-4/12' src={previewUrl} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} />
-            </div>
-          )}
+          {/* プレビュー画像があれば表示・なければ何も表示しない */}
+          <div className='mt-4'>
+            {previewUrl ? <Image className='w-4/12' src={previewUrl} alt="image" width={150} height={100} layout='fixed' objectfit={"cover"} /> : <></>}
+          </div>
+          
           <input className='border-white-300 border-2 rounded p-1 w-16 mt-4' type="submit" />
         </form>
       </div>
@@ -174,7 +167,7 @@ export default function CreateUserPhotoNew({ url,user }) {
         <ul>
           {photos.map((photo) => (
             <li>
-              <Image key={photo.id} className='w-4/12' src={photo.url} alt="image" width={300} height={200} layout='fixed' objectfit={"cover"} />
+              <Image key={photo.id} className='w-4/12' src={photo.url} alt="image" width={150} height={100} layout='fixed' objectfit={"cover"} />
               <button onClick={() => deletePhoto(photo.id)} className='border-gray-300 border-2 rounded p-1 w-12'>削除</button>
             </li>
             
