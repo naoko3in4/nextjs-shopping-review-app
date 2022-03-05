@@ -32,6 +32,7 @@ export default function CreateUserPhotoNew({ url,user }) {
     // URLオブジェクトにする時用のパスに整形
     for (let i = 0; i < photos.length; i++) { 
       let path = photos[i].url.replace('https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/', '')
+      photos[i].path = path
       let { data, error } = await supabase.storage.from('photos').download(path)
       // URLオブジェクト化した変数を配列 photos の url にして格納
       let objURL = URL.createObjectURL(data)   
@@ -97,7 +98,8 @@ export default function CreateUserPhotoNew({ url,user }) {
         user_id: user.id,
         title: title,
         is_published: is_published,
-        url: publicURL
+        url: publicURL,
+        path: publicURL.replace('https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/', '')
       }])
 
       toast.success("画像を投稿しました！")
@@ -106,7 +108,15 @@ export default function CreateUserPhotoNew({ url,user }) {
       // 画像一覧ステートにプレビュー画像（URLオブジェクトになったもの）を追加
       let previewDate = data
       previewDate.url = previewUrl
-      setPhotos([...photos, previewDate])
+      previewDate.path = publicURL.replace('https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/', '')
+
+      // 画像ステート配列は空にする
+      setPhotos([])
+
+      // 画像一覧を取得
+      await fetchPhotos()
+
+      // setPhotos([...photos, previewDate])
 
       // プレビュー画像を消す
       setPreviewUrl(null)
@@ -121,14 +131,26 @@ export default function CreateUserPhotoNew({ url,user }) {
   }
 
   // DB から画像情報の削除
-  const deletePhoto = async (id) => {
+  const deletePhoto = async (id,path) => {
     try {
-      await supabase.from('photos').delete().eq('id', id)
+      console.log('id', id)
+      await supabase.from(SUPABASE_BUCKET_PHOTOS_PATH).delete().eq('id', id)
       // photos配列の該当画像情報も削除
       setPhotos(photos.filter((x) => x.id != id))
+
+      deleteStoragePhoto(path)      
+      
     } catch (error) {
       console.log('error', error)
     }
+  }
+
+  // ストレージの画像削除
+  const deleteStoragePhoto = async (path) => {
+      await supabase
+      .storage
+      .from(SUPABASE_BUCKET_PHOTOS_PATH)
+      .remove([path])
   }
 
   return (
@@ -168,7 +190,7 @@ export default function CreateUserPhotoNew({ url,user }) {
           {photos.map((photo) => (
             <li>
               <Image key={photo.id} className='w-4/12' src={photo.url} alt="image" width={150} height={100} layout='fixed' objectfit={"cover"} />
-              <button onClick={() => deletePhoto(photo.id)} className='border-gray-300 border-2 rounded p-1 w-12'>削除</button>
+              <button onClick={() => deletePhoto(photo.id,photo.path)} className='border-gray-300 border-2 rounded p-1 w-12'>削除</button>
             </li>
             
           ))}
