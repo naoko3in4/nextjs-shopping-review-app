@@ -138,7 +138,7 @@ export default function CreateUserPhotoNew({ url,user }) {
       // photos配列の該当画像情報も削除
       setPhotos(photos.filter((x) => x.id != id))
 
-      deleteStoragePhoto(path)      
+      deleteStoragePhoto(path)
       
     } catch (error) {
       console.log('error', error)
@@ -190,6 +190,7 @@ export default function CreateUserPhotoNew({ url,user }) {
           {photos.map((photo) => (
             <li>
               <Image key={photo.id} className='w-4/12' src={photo.url} alt="image" width={150} height={100} layout='fixed' objectfit={"cover"} />
+              <p>{ photo.title }</p>
               <button onClick={() => deletePhoto(photo.id,photo.path)} className='border-gray-300 border-2 rounded p-1 w-12'>削除</button>
             </li>
             
