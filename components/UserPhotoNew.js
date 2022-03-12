@@ -100,23 +100,19 @@ export default function CreateUserPhotoNew({ url,user }) {
         is_published: is_published,
         url: publicURL,
         path: publicURL.replace('https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/', '')
-      }])
+      }]).single()
 
       toast.success("画像を投稿しました！")
       // Router.push(`/user/${user.id}`)
       if (error) setError(error.message)
       // 画像一覧ステートにプレビュー画像（URLオブジェクトになったもの）を追加
-      let previewDate = data
+      let previewDate = photo
+      // let previewDate = data
       previewDate.url = previewUrl
       previewDate.path = publicURL.replace('https://bwhahbwtecvxdsgymnbf.supabase.co/storage/v1/object/public/photos/', '')
 
-      // 画像ステート配列は空にする
-      setPhotos([])
-
-      // 画像一覧を取得
-      await fetchPhotos()
-
-      // setPhotos([...photos, previewDate])
+      // ステートに値を持たせる
+      setPhotos([...photos, previewDate])
 
       // プレビュー画像を消す
       setPreviewUrl(null)
