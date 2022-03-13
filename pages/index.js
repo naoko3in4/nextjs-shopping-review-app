@@ -1,29 +1,27 @@
 import { supabase } from '../lib/initSupabase'
 import { Auth } from '@supabase/ui'
-import TodoList from '../components/TodoList'
-// import UserPhotoNew from '../components/UserPhotoNew'
 import CreateUserPhotoNew from '../components/UserPhotoNew'
 
 export default function IndexPage() {
   const { user } = Auth.useUser()
 
   return (
-    <div className="w-full h-full bg-gray-300">
+    <div className="w-full h-full bg-slate-200">
       {!user ? (
-        <div className="w-full h-full flex justify-center items-center p-4">
+        <div className="w-full h-full p-4">
           <Auth
             supabaseClient={supabase}
             providers={['google', 'github']}
             socialLayout="horizontal"
             socialButtonSize="xlarge"
+            socialButtonType="default"
           />
         </div>
       ) : (
         <div
-          className="w-full h-full flex flex-col justify-center items-center p-4"
+          className="w-full h-full items-center p-4"
           style={{ minWidth: 250, maxWidth: 600, margin: 'auto' }}
         >
-            <TodoList user={supabase.auth.user()} />
             <CreateUserPhotoNew user={supabase.auth.user()} />
           <button
             className="btn-black w-full mt-12"
@@ -32,7 +30,6 @@ export default function IndexPage() {
               if (error) console.log('Error logging out:', error.message)
             }}
           >
-            {/* <UserPhotoNew user={supabase.auth.user()}/> */}
             Logout
           </button>
         </div>
