@@ -3,9 +3,6 @@ import { supabase } from '../lib/initSupabase'
 import { v4 as uuidv4 } from 'uuid';
 
 import { SubmitHandler, useForm } from 'react-hook-form'
-// import { Profile } from '../../../hooks/useUser'
-// import { Main } from '../../ui/Main'
-// import Router from 'next/router';
 import { toast } from 'react-toastify';
 import { SUPABASE_BUCKET_PHOTOS_PATH } from '../lib/const';
 import { removeBucketPath } from '../lib/removeBucketPath';
